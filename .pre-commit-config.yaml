@@ -21,6 +21,11 @@ repos:
     rev: 3.8.3
     hooks:
       - id: flake8
+        additional_dependencies:
+          - flake8-bugbear
+          - flake8-comprehensions
+          # https://github.com/Arkq/flake8-requirements/issues/26
+          #- flake8-requirements
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.782
@@ -38,9 +43,4 @@ repos:
       - id: check-symlinks
       - id: check-yaml
       - id: end-of-file-fixer
-      - id: flake8
-        additional_dependencies:
-          - flake8-bugbear
-          - flake8-comprehensions
-          - flake8-requirements
       - id: trailing-whitespace

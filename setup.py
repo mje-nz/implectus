@@ -1,6 +1,6 @@
 import setuptools
 
-about = {}
+about = {}  # type: ignore
 with open("myst_literate/__about__.py") as f:
     exec(f.read(), about)
 
@@ -23,5 +23,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
+    install_requires=["jupytext>=1.5.2,<1.6", "nbformat>=5.0.7,<6"],
 )

@@ -1,8 +1,8 @@
 """Integration tests for export module."""
 
-from pathlib import Path
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -24,7 +24,7 @@ class LiterateProjectDir:
             self.notebook_root / notebook_name,
             self.notebook_root,
             self.package_root,
-            self.doc_root
+            self.doc_root,
         )
 
 
@@ -45,30 +45,34 @@ def project(request, tmpdir):
 
 def test_export_library(project: LiterateProjectDir):
     project.notebook_root.mkdir()
-    project.notebook_root.joinpath("main.py").write_text(textwrap.dedent("""\
-        # # Title
+    project.notebook_root.joinpath("main.py").write_text(
+        textwrap.dedent(
+            """\
+            # # Title
 
-        # + tags=["export"]
-        def hello():
-            print("Hello world")
-            return True
-        # -
+            # + tags=["export"]
+            def hello():
+                print("Hello world")
+                return True
+            # -
 
-        hello()
-    """))
+            hello()
+            """
+        )
+    )
     module = project.get_module("main.py")
     module.export_to_package()
 
-    expected = textwrap.dedent("""\
+    expected = textwrap.dedent(
+        """\
         def hello():
             print("Hello world")
             return True
-    """)
+        """
+    )
     assert project.package_root.joinpath("main.py").read_text() == expected
 
     sys.path.append(str(project.root))
-    import package.main
+    import package.main  # noqa: I900
+
     assert package.main.hello()
-
-
-

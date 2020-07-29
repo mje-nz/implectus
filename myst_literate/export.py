@@ -1,21 +1,16 @@
 import copy
-import importlib
 import itertools
-from pathlib import Path
 import re
-import sys
-import types
+from pathlib import Path
 
 import jupytext
 from nbformat import NotebookNode
 
 
 def nb_cell(cell_type, metadata=None, source=""):
-    return NotebookNode({
-        "cell_type": cell_type,
-        "metadata": metadata or {},
-        "source": source
-    })
+    return NotebookNode(
+        {"cell_type": cell_type, "metadata": metadata or {}, "source": source}
+    )
 
 
 def should_export(cell):
@@ -29,15 +24,14 @@ def relative_import(name, current_module):
     current_module = current_module.split(".")
     assert len(current_module) > 1
     parent_module = current_module[:-1]
-    common_part = list(itertools.takewhile(
-        lambda x: x[0] == x[1],
-        zip(name, parent_module)
-    ))
+    common_part = list(
+        itertools.takewhile(lambda x: x[0] == x[1], zip(name, parent_module))
+    )
     if len(common_part) == 0:
         # name is not in the same package as current_module
         return ".".join(name)
     common_ancestor_name = "." * (len(current_module) - len(common_part))
-    return common_ancestor_name + ".".join(name[len(common_part):])
+    return common_ancestor_name + ".".join(name[len(common_part) :])
 
 
 def relativize_imports(cell, module_name):
@@ -52,11 +46,10 @@ def relativize_imports(cell, module_name):
     # TODO: warn on absolute imports
     package_name = module_name.split(".")[0]
     re_import = re.compile(
-        r"^(\s*from )({}\.?\S*)( import .*)$".format(package_name),
-        flags=re.MULTILINE)
+        r"^(\s*from )({}\.?\S*)( import .*)$".format(package_name), flags=re.MULTILINE
+    )
     cell.source = re_import.sub(
-        lambda m: "".join((m[1], relative_import(m[2], module_name), m[3])),
-        cell.source
+        lambda m: "".join((m[1], relative_import(m[2], module_name), m[3])), cell.source
     )
     return cell
 
@@ -86,7 +79,7 @@ def should_document(cell):
 _directives = "module|function|data|exception|class|decorator"
 _re_sphinx_directive = re.compile(
     r"^\s*```\s*{(?:py:|auto)?(?:%s)}\s+([^`\s(]*).*?```" % _directives,
-    re.MULTILINE | re.DOTALL
+    re.MULTILINE | re.DOTALL,
 )
 
 
@@ -137,7 +130,6 @@ def concat(iterable):
 
 
 class Module:
-
     def __init__(self, path, notebook_root, package_root, doc_root=None, fp=None):
         """Read a module from a file of any type Jupytext supports.
 
@@ -162,7 +154,7 @@ class Module:
     @property
     def _module_path(self):
         """Path of exported module."""
-        return self._package_root/self._notebook_filename.with_suffix(".py")
+        return self._package_root / self._notebook_filename.with_suffix(".py")
 
     @property
     def _module_name(self):
@@ -172,7 +164,7 @@ class Module:
     @property
     def _doc_path(self):
         """Path of exported documentation notebook."""
-        return self._doc_root/self._notebook_filename.with_suffix(".ipynb")
+        return self._doc_root / self._notebook_filename.with_suffix(".ipynb")
 
     def export_to_package(self, fp=None):
         """Export the cells marked for export into a module in the given package.

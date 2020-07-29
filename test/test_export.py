@@ -1,15 +1,15 @@
 """Unit tests for export module."""
 
 import io
-from pathlib import Path
 import textwrap
+from pathlib import Path
 
 import jupytext
 import pytest
 
-from myst_literate.export import nb_cell as cell
-from myst_literate.export import should_export, relative_import, relativize_imports
 from myst_literate.export import Module
+from myst_literate.export import nb_cell as cell
+from myst_literate.export import relative_import, relativize_imports, should_export
 
 
 class TestShouldExport:
@@ -41,7 +41,7 @@ class TestRelativeImport:
             ("package.sibling", ".sibling"),
             ("package.sibling.niece", ".sibling.niece"),
             ("other_package", "other_package"),
-        )
+        ),
     )
     def test_simple(self, name, expected):
         assert relative_import(name, "package.module") == expected
@@ -56,7 +56,7 @@ class TestRelativeImport:
             ("package.parent.sibling", ".sibling"),
             ("package.parent.sibling.niece", ".sibling.niece"),
             ("other_package", "other_package"),
-        )
+        ),
     )
     def test_parent(self, name, expected):
         assert relative_import(name, "package.parent.module") == expected
@@ -82,10 +82,10 @@ class TestRelativizeImports:
             ),
             (
                 "from package.sibling.niece import name",
-                "from .sibling.niece import name"
+                "from .sibling.niece import name",
             ),
             ("from other_package import name", "from other_package import name"),
-        )
+        ),
     )
     def test_simple(self, in_, out):
         input_cell = cell("code", {}, in_)
@@ -102,10 +102,10 @@ class TestRelativizeImports:
             ("from package.parent.sibling import name", "from .sibling import name"),
             (
                 "from package.parent.sibling.niece import name",
-                "from .sibling.niece import name"
+                "from .sibling.niece import name",
             ),
             ("from other_package import name", "from other_package import name"),
-        )
+        ),
     )
     def test_parent(self, in_, out):
         input_cell = cell("code", {}, in_)
@@ -115,10 +115,7 @@ class TestRelativizeImports:
 
 @pytest.mark.parametrize(
     "path,src",
-    (
-        ("notebooks/main.py", ""),
-        ("notebooks/main.ipynb", '{"metadata": {}}')
-    )
+    (("notebooks/main.py", ""), ("notebooks/main.ipynb", '{"metadata": {}}')),
 )
 def test_module_properties(path, src):
     module = Module(
@@ -126,7 +123,7 @@ def test_module_properties(path, src):
         notebook_root="notebooks",
         package_root="package",
         doc_root="doc",
-        fp=io.StringIO(src)
+        fp=io.StringIO(src),
     )
     assert module._module_path == Path("package/main.py")
     assert module._module_name == "package.main"
@@ -134,12 +131,12 @@ def test_module_properties(path, src):
 
 
 def _test_export_library(
-        source,
-        expected,
-        path="notebooks/main.py",
-        notebook_root="notebooks",
-        package_root="package",
-        doc_root="doc"
+    source,
+    expected,
+    path="notebooks/main.py",
+    notebook_root="notebooks",
+    package_root="package",
+    doc_root="doc",
 ):
     """Test exporting a notebook to a module.
 
@@ -158,30 +155,34 @@ def _test_export_library(
 
 
 def test_export_library():
-    source = textwrap.dedent("""\
+    source = textwrap.dedent(
+        """\
         # # Title
-        
+
         # + tags=["export"]
         def hello():
             print("Hello world")
         # -
-        
+
         hello()
-    """)
-    expected = textwrap.dedent("""\
+    """
+    )
+    expected = textwrap.dedent(
+        """\
         def hello():
             print("Hello world")
-    """)
+    """
+    )
     _test_export_library(source, expected)
 
 
 def _test_export_doc(
-        source,
-        expected,
-        path="notebooks/main.py",
-        notebook_root="notebooks",
-        package_root="package",
-        doc_root="doc"
+    source,
+    expected,
+    path="notebooks/main.py",
+    notebook_root="notebooks",
+    package_root="package",
+    doc_root="doc",
 ):
     """Test preprocessing a notebook for documentation generation.
 
@@ -205,7 +206,8 @@ def _test_export_doc(
 
 
 def test_export_doc():
-    source = textwrap.dedent("""\
+    source = textwrap.dedent(
+        """\
         # # Title
 
         # + tags=["export"]
@@ -214,19 +216,22 @@ def test_export_doc():
         # -
 
         hello()
-    """)
-    expected = textwrap.dedent("""\
+        """
+    )
+    expected = textwrap.dedent(
+        """\
         # ```{py:currentmodule} package.main```
-        
+
         # # Title
-        
+
         # ```{autofunction} hello```
-        
+
         # + tags=["export", "remove-input"]
         def hello():
             print("Hello world")
         # -
 
         hello()
-    """)
+        """
+    )
     _test_export_doc(source, expected)
