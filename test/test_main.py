@@ -36,7 +36,9 @@ def test_writes_code():
 
 
 def test_writes_doc():
-    cfg = LiterateConfiguration(source_dir=".", code_dir="package")
+    cfg = LiterateConfiguration(
+        source_dir=".", code_dir="package", export_code_as_package=True
+    )
     nb = jupytext.reads(source, fmt="py:light")
     result = writes_doc(nb, "main.py", cfg)
     actual = jupytext.writes(jupytext.reads(result, fmt=cfg.doc_format), fmt="py:light")

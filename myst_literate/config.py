@@ -33,7 +33,7 @@ class LiterateConfiguration(Configurable):
     )
 
     export_code_as_package = Bool(
-        True,
+        False,
         help="Whether to export code as a package or as individual modules, i.e., whether "
         "to generate __init__.py modules.",
         config=True,
