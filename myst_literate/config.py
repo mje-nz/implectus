@@ -89,7 +89,8 @@ class LiterateConfiguration(Configurable):
 
     def code_path_for_source(self, source_file_path):
         """Get the path of the module into which to export the given source's code."""
-        return self.code_path / self.relative_path_to_source(source_file_path)
+        filename = self.relative_path_to_source(source_file_path).with_suffix(".py")
+        return self.code_path / filename
 
     def module_name(self, source_file_path):
         """Calculate the module name for the given source notebook when exported."""

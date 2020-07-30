@@ -90,6 +90,16 @@ def test_relative_path_to_source_invalid(path, source, root):
         ("notebooks/main.py", "notebooks", "package", "package/main.py"),
         ("notebooks/module/main.py", "notebooks", "", "module/main.py"),
         ("notebooks/module/main.py", "notebooks", "package", "package/module/main.py"),
+        ("notebooks/main.ipynb", "notebooks", "", "main.py"),
+        ("main.ipynb", "", "package", "package/main.py"),
+        ("notebooks/main.ipynb", "notebooks", "package", "package/main.py"),
+        ("notebooks/module/main.ipynb", "notebooks", "", "module/main.py"),
+        (
+            "notebooks/module/main.ipynb",
+            "notebooks",
+            "package",
+            "package/module/main.py",
+        ),
     ),
 )
 def test_code_path_for_source(path, source, code, expected, export_package):
