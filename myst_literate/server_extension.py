@@ -1,3 +1,5 @@
+import textwrap
+
 import jupytext
 import nbformat
 from jupytext.contentsmanager import build_jupytext_contents_manager_class
@@ -8,9 +10,8 @@ from .config import LiterateConfiguration  # , load_literate_config
 from .main import write_code, write_doc
 
 __all__ = [
-    "build_literate_contents_manager_class",
     "LiterateContentsManager",
-    "replace_contents_manager",
+    "load_jupyter_server_extension",
 ]
 
 
@@ -85,3 +86,32 @@ def replace_contents_manager(app: NotebookApp):
     app.session_manager.contents_manager = contents_manager
     app.web_app.settings["contents_manager"] = contents_manager
     app.log.info("[Literate] Contents manager set up successfully")
+
+
+def load_jupyter_server_extension(app):
+    """Use literate's content manager in the Jupyter notebook server.
+
+    Called by the server during startup if the literate server extension is enabled.
+    """
+    if hasattr(app.contents_manager_class, "TODO"):
+        app.log.info("[Literate] Literate contents manager already loaded")
+        return
+
+    # The contents manager has already been initialised in
+    # notebook.NotebookApp.init_configurables, so we have to replace it (see
+    # notebook.NotebookApp.initialize).
+    try:
+        replace_contents_manager(app)
+    except Exception:
+        app.log.error(
+            textwrap.dedent(
+                """\
+            [Literate] An error occurred. Please deactivate the server extension with
+                jupyter serverextension disable myst_literate
+            and configure the contents manager manually by adding
+                c.NotebookApp.contents_manager_class = "myst_literate.TextFileContentsManager"
+            to your .jupyter/jupyter_notebook_config.py file.
+            """
+            )
+        )
+        raise

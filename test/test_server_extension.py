@@ -4,7 +4,7 @@ import jupytext
 import pytest
 
 from myst_literate import LiterateContentsManager
-from myst_literate.contentsmanager import build_literate_contents_manager_class
+from myst_literate.server_extension import build_literate_contents_manager_class
 
 
 @pytest.fixture(params=[True, False])
