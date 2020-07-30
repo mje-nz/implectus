@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from myst_literate.export import Module
+from myst_literate.main import Module
 
 
 class LiterateProjectDir:
