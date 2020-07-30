@@ -1,9 +1,9 @@
 import textwrap
 
 from .__about__ import __version__
-from .contentsmanager import FileContentsManager, replace_contents_manager
+from .contentsmanager import LiterateContentsManager, replace_contents_manager
 
-__all__ = ["__version__", "FileContentsManager", "load_jupyter_server_extension"]
+__all__ = ["__version__", "LiterateContentsManager", "load_jupyter_server_extension"]
 
 
 def load_jupyter_server_extension(app):

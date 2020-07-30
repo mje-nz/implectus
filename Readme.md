@@ -32,6 +32,7 @@ To do:
 * Set up RTD
 * Support exporting to multiple files
 * Support exporting to a file with a different name
+* Upstream clever bits as refactors to Jupytext
 
 
 ## Related projects

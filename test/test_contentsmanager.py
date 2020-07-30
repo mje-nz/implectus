@@ -3,12 +3,18 @@ import textwrap
 import jupytext
 import pytest
 
-from myst_literate import FileContentsManager
+from myst_literate import LiterateContentsManager
+from myst_literate.contentsmanager import build_literate_contents_manager_class
 
 
-@pytest.fixture
-def cm(tmpdir):
-    return FileContentsManager(root_dir=str(tmpdir))
+@pytest.fixture(params=[True, False])
+def cm(tmpdir, request):
+    should_build = request.param
+    if should_build:
+        class_ = build_literate_contents_manager_class(jupytext.TextFileContentsManager)
+    else:
+        class_ = LiterateContentsManager
+    return class_(root_dir=str(tmpdir))
 
 
 source = textwrap.dedent(
