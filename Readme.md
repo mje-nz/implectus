@@ -19,6 +19,7 @@ Implemented:
 To do:
 * Generate `__init__.py`
 * Fill in `__all__`
+* Strip empty cells
 * Copy images when exporting docs
 * Command-line tool
 * Jupytext integration:

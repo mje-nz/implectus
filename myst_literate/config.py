@@ -49,7 +49,7 @@ class LiterateConfiguration(Configurable):
 
     root_dir = Unicode("", help="Root folder of project.")
 
-    def validate(self):
+    def validate_config(self):
         """Check whether the configuration is valid.
 
         This is not called magically.
@@ -94,7 +94,7 @@ class LiterateConfiguration(Configurable):
 
     def module_name(self, source_file_path):
         """Calculate the module name for the given source notebook when exported."""
-        self.validate()
+        self.validate_config()
         if self.export_code_as_package:
             package = Path(self.code_dir).parts[-1]
             module_path = Path(package) / self.relative_path_to_source(source_file_path)
