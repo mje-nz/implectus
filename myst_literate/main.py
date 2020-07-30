@@ -1,97 +1,147 @@
 import copy
 from pathlib import Path
+from typing import Union, cast
+from typing.io import TextIO
 
 import jupytext
+from nbformat import NotebookNode
 
+from .config import LiterateConfiguration
 from .export_code import relativize_imports, should_export
 from .export_doc import document_cell, documented_names, should_document
 from .util import concat, nb_cell
 
 
-class Module:
-    def __init__(self, path, notebook_root, package_root, doc_root=None, fp=None):
-        """Read a module from a file of any type Jupytext supports.
+def _jupytext_writes(notebook: NotebookNode, fmt: str, **kwargs):
+    """"Write a notebook to a Unicode string in a given Jupytext format.
 
-        Args:
-            path: Path of notebook to read.
-            notebook_root: Folder containing notebooks.
-            package_root: Root folder of package to export into.
-            doc_root: Folder to export documentation notebooks into.
-            fp: File-like object to read notebook from (for testing).
-        """
-        self._notebook_root = Path(notebook_root)
-        try:
-            self._notebook_filename = Path(path).relative_to(self._notebook_root)
-        except ValueError as e:
-            raise ValueError("Notebook must be inside notebook root") from e
-        self._package_root = Path(package_root)
-        self._doc_root = Path(doc_root)
-        if not fp:
-            fp = open(path)
-        self._nb = jupytext.read(fp, fmt=self._notebook_filename.suffix)
+    Args:
+        notebook: The notebook to write.
+        fmt: The Jupytext format (e.g. "py:light", "ipynb").
+        **kwargs: Additional arguments for `nbformat.writes`.
 
-    @property
-    def _module_path(self):
-        """Path of exported module."""
-        return self._package_root / self._notebook_filename.with_suffix(".py")
+    Returns: The Unicode representation of the notebook, with a trailing newline.
+    """
+    content = jupytext.writes(notebook, fmt, **kwargs)
+    if isinstance(content, bytes):
+        content = content.decode("utf8")
+    if not content.endswith("\n"):
+        content += "\n"
+    return content
 
-    @property
-    def _module_name(self):
-        """Dotted name of exported module."""
-        return ".".join(self._module_path.with_suffix("").parts)
 
-    @property
-    def _doc_path(self):
-        """Path of exported documentation notebook."""
-        return self._doc_root / self._notebook_filename.with_suffix(".ipynb")
+def writes_code(
+    notebook: NotebookNode,
+    source_filename: Union[str, Path],
+    config: LiterateConfiguration,
+):
+    """Write the code for the given source file to a string.
 
-    def export_to_package(self, fp=None):
-        """Export the cells marked for export into a module in the given package.
+    The format is given by config.code_format.
 
-        Args:
-            fp: File-like object to write module to (for testing).
-        """
-        nb = copy.deepcopy(self._nb)
+    Args:
+        notebook: The notebook to write.
+        source_filename: Full path of the file from which notebook was read.
+        config: The Literate configuration.
+    """
+    nb = copy.deepcopy(notebook)
 
-        nb.cells = [cell for cell in nb.cells if should_export(cell)]
-        nb.cells = [relativize_imports(cell, self._module_name) for cell in nb.cells]
+    nb.cells = [cell for cell in nb.cells if should_export(cell)]
+    if config.export_code_as_package:
+        nb.cells = [
+            relativize_imports(cell, config.module_name(source_filename))
+            for cell in nb.cells
+        ]
 
-        if not fp:
-            self._module_path.parent.mkdir(parents=True, exist_ok=True)
-            fp = self._module_path.open("w")
-        nb.metadata.get("jupytext", {})["notebook_metadata_filter"] = "-all"
-        jupytext.write(nb, fp, fmt="py:nomarker")
+    nb.metadata.get("jupytext", {})["notebook_metadata_filter"] = "-all"
+    return _jupytext_writes(nb, config.code_format)
 
-    def preprocess_for_doc(self, fp=None):
-        """Preprocess a notebook and write into documentation folder.
 
-        Args:
-            fp: File-like object to output notebook to (for testing).
-        """
-        nb = copy.deepcopy(self._nb)
+def write_code(
+    notebook: NotebookNode,
+    source_filename: Union[str, Path],
+    config: LiterateConfiguration,
+    fp: Union[str, Path, TextIO] = None,
+):
+    """Write the code for the given source file to a file.
 
-        # Insert py:currentmodule directive for autodoc
-        directive = "```{py:currentmodule} %s```" % self._module_name
-        nb.cells.insert(0, nb_cell("markdown", {}, directive))
+    The format is given by config.code_format.
 
-        nb.cells = [cell for cell in nb.cells if should_document(cell)]
-        documented_names_ = concat(documented_names(cell) for cell in nb.cells)
-        nb.cells = concat(document_cell(cell, documented_names_) for cell in nb.cells)
+    Args:
+        notebook: The notebook to write.
+        source_filename: Full path of the file from which notebook was read.
+        config: The Literate configuration.
+        fp: Any file-like object with a write method that accepts Unicode, or a path to
+            write a file, or None to determine the destination filename automatically.
+    """
+    if fp is None:
+        fp = config.code_path_for_source(source_filename)
+    if not hasattr(fp, "write"):
+        # fp is a filename
+        path = Path(fp)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return write_code(notebook, source_filename, config, path.open("w"))
+    fp = cast(TextIO, fp)
+    fp.write(writes_code(notebook, source_filename, config))
 
-        if not fp:
-            fp = self._doc_path.open("w")
-        jupytext.write(nb, fp, fmt="ipynb")
+
+def writes_doc(
+    notebook: NotebookNode,
+    source_filename: Union[str, Path],
+    config: LiterateConfiguration,
+):
+    """Write the documentation for the given source file to a string.
+
+    The format is given by config.doc_format.
+
+    Args:
+        notebook: The notebook to write.
+        source_filename: Full path of the file from which notebook was read.
+        config: The Literate configuration.
+    """
+    nb = copy.deepcopy(notebook)
+
+    # Insert py:currentmodule directive for autodoc
+    directive = "```{py:currentmodule} %s```" % config.module_name(source_filename)
+    nb.cells.insert(0, nb_cell("markdown", {}, directive))
+
+    nb.cells = [cell for cell in nb.cells if should_document(cell)]
+    documented_names_ = concat(documented_names(cell) for cell in nb.cells)
+    nb.cells = concat(document_cell(cell, documented_names_) for cell in nb.cells)
+
+    return _jupytext_writes(nb, config.doc_format)
+
+
+def write_doc(
+    notebook: NotebookNode,
+    source_filename: Union[str, Path],
+    config: LiterateConfiguration,
+    fp: Union[str, Path, TextIO] = None,
+):
+    """Write the documentation for the given source file to a file.
+
+    The format is given by config.doc_format.
+
+    Args:
+        notebook: The notebook to write.
+        source_filename: Full path of the file from which notebook was read.
+        config: The Literate configuration.
+        fp: Any file-like object with a write method that accepts Unicode, or a path to
+            write a file, or None to determine the destination filename automatically.
+    """
+    if fp is None:
+        fp = config.doc_path_for_source(source_filename)
+    if not hasattr(fp, "write"):
+        # fp is a filename
+        path = Path(fp)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return write_doc(notebook, source_filename, config, path.open("w"))
+    fp = cast(TextIO, fp)
+    fp.write(writes_doc(notebook, source_filename, config))
 
 
 # TODO sanity checks:
 #   imports are translatable
 #   no conflicting tags
 
-
-def main(notebook_filename, notebook_root, package_root, doc_root):
-    module = Module(notebook_filename, notebook_root, package_root, doc_root)
-    module.export_to_package()
-    module.preprocess_for_doc()
-
-
-# TODO: test
+# TODO: CLI
