@@ -144,4 +144,20 @@ def write_doc(
 #   imports are translatable
 #   no conflicting tags
 
+
+def sync(config: LiterateConfiguration):
+    """Export code and doc for each file in the source directory."""
+    if not config.source_dir:
+        return
+    sources = [
+        path for path in config.source_path.glob("**/*") if config.should_process(path)
+    ]
+    for source in sources:
+        nb = jupytext.read(source)
+        if config.code_dir:
+            write_code(nb, source, config)
+        if config.doc_dir:
+            write_doc(nb, source, config)
+
+
 # TODO: CLI
