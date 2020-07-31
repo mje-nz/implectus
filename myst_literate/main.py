@@ -103,7 +103,7 @@ def writes_doc(
 
     # Insert py:currentmodule directive for autodoc
     directive = "```{py:currentmodule} %s```" % config.module_name(source_filename)
-    nb.cells.insert(0, nb_cell("markdown", {}, directive))
+    nb.cells.insert(0, nb_cell("markdown", directive))
 
     nb.cells = [cell for cell in nb.cells if should_document(cell)]
     documented_names_ = concat(documented_names(cell) for cell in nb.cells)

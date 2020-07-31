@@ -3,7 +3,7 @@
 import pytest
 
 from myst_literate.export_code import relative_import, relativize_imports, should_export
-from myst_literate.util import nb_cell as cell
+from myst_literate.util import nb_cell
 
 
 class TestShouldExport:
@@ -11,17 +11,17 @@ class TestShouldExport:
     """Tests for should_export function."""
 
     def test_export(self):
-        assert should_export(cell("code", {"tags": ["export"]}, "pass"))
+        assert should_export(nb_cell("code", "pass", tags=["export"]))
 
     def test_export_internal(self):
-        assert should_export(cell("code", {"tags": ["export-internal"]}, "pass"))
+        assert should_export(nb_cell("code", "pass", tags=["export-internal"]))
 
     def test_untagged(self):
-        assert not should_export(cell("code", {}, "pass"))
+        assert not should_export(nb_cell("code", "pass"))
 
     @pytest.mark.parametrize("cell_type", ("markdown", "raw"))
     def test_noncode(self, cell_type):
-        assert not should_export(cell(cell_type, {}, "pass"))
+        assert not should_export(nb_cell(cell_type, "pass"))
 
 
 class TestRelativeImport:
@@ -82,7 +82,7 @@ class TestRelativizeImports:
         ),
     )
     def test_simple(self, in_, out):
-        input_cell = cell("code", {}, in_)
+        input_cell = nb_cell("code", in_)
         output_cell = relativize_imports(input_cell, "package.module")
         assert output_cell.source == out
 
@@ -102,7 +102,7 @@ class TestRelativizeImports:
         ),
     )
     def test_parent(self, in_, out):
-        input_cell = cell("code", {}, in_)
+        input_cell = nb_cell("code", in_)
         output_cell = relativize_imports(input_cell, "package.parent.module")
         assert output_cell.source == out
 

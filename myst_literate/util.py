@@ -4,10 +4,18 @@ import itertools
 from nbformat import NotebookNode
 
 
-def nb_cell(cell_type, metadata=None, source=""):
-    """Construct a Jupyter notebook cell."""
+def nb_cell(cell_type: str, source="", metadata: dict = None, **kwargs):
+    """Construct a Jupyter notebook cell.
+
+    Args:
+        cell_type: Cell type (markdown, code, raw).
+        source: Cell source.
+        metadata: Metadata dictionary.
+        **kwargs: Additional metadata.
+    """
+    metadata = dict(metadata or {}, **kwargs)
     return NotebookNode(
-        {"cell_type": cell_type, "metadata": metadata or {}, "source": source}
+        {"cell_type": cell_type, "metadata": metadata, "source": source}
     )
 
 

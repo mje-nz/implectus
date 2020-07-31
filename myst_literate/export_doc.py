@@ -54,5 +54,5 @@ def document_cell(cell, skip_names):
             # Insert a cell with the autodoc directives before this one in the notebook,
             # so that a cell which defines a function and then executes something will
             # at least have the autodoc directive before the output
-            cells.insert(0, nb_cell("markdown", {}, "\n".join(directives)))
+            cells.insert(0, nb_cell("markdown", "\n".join(directives)))
     return cells
