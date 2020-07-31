@@ -25,7 +25,11 @@ class LiterateContentsManager(
     def save(self, model: dict, path=""):
         """Save the file model and return the model with no content."""
         # TODO: do nothing with default config
-        if "type" in model and model["type"] == "notebook":
+        if (
+            "type" in model
+            and model["type"] == "notebook"
+            and self.should_process(path)
+        ):
             # TODO: only for notebooks in source path
             nb = nbformat.from_dict(model["content"])
             nb_path = self._get_os_path(path)

@@ -62,6 +62,7 @@ class LiterateConfiguration(Configurable):
 
     @property
     def root_path(self):
+        # TODO: should this be always absolute?
         return Path(self.root_dir)
 
     @property
@@ -78,6 +79,10 @@ class LiterateConfiguration(Configurable):
     def doc_path(self):
         """Path to doc directory (absolute if root path is set)."""
         return self.root_path / self.doc_dir
+
+    def should_process(self, path):
+        """Check if a path should be treated as a source document."""
+        return self.source_path.resolve() in (self.root_path / path).resolve().parents
 
     def relative_path_to_source(self, source_file_path):
         """Get the given path relative to the source folder."""

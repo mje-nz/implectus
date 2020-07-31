@@ -56,6 +56,24 @@ def test_doc_path(doc, root, expected):
 @pytest.mark.parametrize(
     "path,source,root,expected",
     (
+        ("notebooks/main.py", "notebooks", "", True),
+        ("main.py", "notebooks", "", False),
+        ("main.py", ".", "", True),
+        ("main.py", "", ".", True),
+        ("main.py", "", "", True),
+        ("/tmp/notebooks/main.py", "notebooks", "/tmp", True),
+        ("notebooks/main.py", "notebooks", "/tmp", True),
+        ("/tmp/notebooks/main.py", "", "", False),
+    ),
+)
+def test_should_process(path, source, root, expected):
+    cfg = LiterateConfiguration(source_dir=source, root_dir=root)
+    assert cfg.should_process(path) == expected
+
+
+@pytest.mark.parametrize(
+    "path,source,root,expected",
+    (
         ("notebooks/main.py", "notebooks", "", "main.py"),
         ("./notebooks/main.py", "notebooks", "", "main.py"),
         ("notebooks/module/main.py", "notebooks", "", "module/main.py"),

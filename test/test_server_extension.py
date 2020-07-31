@@ -71,3 +71,24 @@ def test_load_save(cm):
     assert (cm.root_path / "package" / "main.py").read_text() == code
     doc_nb = jupytext.read(cm.root_path / "doc" / "main.ipynb")
     assert jupytext.writes(doc_nb, fmt="py:light") == doc
+
+
+@pytest.mark.parametrize("path", ("main.py", "notebooks/main.py"))
+def test_jupytext_still_works(cm, path):
+    cm.source_dir = "notebooks"
+    cm.code_dir = "package"
+    cm.doc_dir = "doc"
+    cm.export_code_as_package = True
+    (cm.root_path / path).parent.mkdir(exist_ok=True)
+
+    nb = jupytext.reads(source, fmt="py:light")
+    nb.metadata["jupytext"] = dict(
+        formats="ipynb,py:light", notebook_metadata_filter="-all"
+    )
+    model = dict(type="notebook", content=nb, format="json")
+
+    cm.save(model, path)
+
+    assert (cm.root_path / path).read_text() == source
+    result_nb = jupytext.read((cm.root_path / path).with_suffix(".ipynb"))
+    assert jupytext.writes(result_nb, fmt="py:light") == source
