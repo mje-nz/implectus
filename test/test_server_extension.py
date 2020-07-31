@@ -1,4 +1,5 @@
 import textwrap
+from pathlib import Path
 
 import jupytext
 import pytest
@@ -9,12 +10,14 @@ from myst_literate.server_extension import build_literate_contents_manager_class
 
 @pytest.fixture(params=[True, False])
 def cm(tmpdir, request):
+    """Create a temporary directory, change to it, and return a contents manager."""
     should_build = request.param
     if should_build:
         class_ = build_literate_contents_manager_class(jupytext.TextFileContentsManager)
     else:
         class_ = LiterateContentsManager
-    return class_(root_dir=str(tmpdir))
+    with tmpdir.as_cwd():
+        yield class_()
 
 
 source = textwrap.dedent(
@@ -64,13 +67,16 @@ def test_load_save(cm):
     cm.source_path.mkdir()
     cm.source_path.joinpath("main.py").write_text(source)
 
-    nb = cm.get("notebooks/main.py")
-    cm.save(model=nb, path="notebooks/main.py")
+    nb = cm.get("/notebooks/main.py")
+    cm.save(model=nb, path="/notebooks/main.py")
 
-    assert (cm.root_path / "notebooks" / "main.py").read_text() == source
-    assert (cm.root_path / "package" / "main.py").read_text() == code
-    doc_nb = jupytext.read(cm.root_path / "doc" / "main.ipynb")
+    assert Path("notebooks/main.py").read_text() == source
+    assert Path("package/main.py").read_text() == code
+    doc_nb = jupytext.read("doc/main.ipynb")
     assert jupytext.writes(doc_nb, fmt="py:light") == doc
+
+
+# TODO: case where code ends up with front matter
 
 
 @pytest.mark.parametrize("path", ("main.py", "notebooks/main.py"))
@@ -87,8 +93,11 @@ def test_jupytext_still_works(cm, path):
     )
     model = dict(type="notebook", content=nb, format="json")
 
-    cm.save(model, path)
+    cm.save(model, "/" + path)
 
-    assert (cm.root_path / path).read_text() == source
-    result_nb = jupytext.read((cm.root_path / path).with_suffix(".ipynb"))
+    assert Path(path).read_text() == source
+    result_nb = jupytext.read(Path(path).with_suffix(".ipynb"))
     assert jupytext.writes(result_nb, fmt="py:light") == source
+
+
+# TODO: run Jupytext test suite somehow?

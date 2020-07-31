@@ -89,3 +89,6 @@ def test_sync(config):
     assert (config.root_path / "package" / "main.py").read_text() == code
     doc_result = jupytext.read(config.root_path / "doc" / "main.ipynb")
     assert jupytext.writes(doc_result, fmt="py:light") == doc
+
+
+# TODO: try everything by changing root dir and by changing working dir

@@ -17,7 +17,7 @@ class LiterateConfiguration(Configurable):
     )
 
     code_dir = Unicode(
-        "",
+        ".",
         help="Root directory of package into which to export code.  If this is specified in "
         "a config file then it is relative to the file, otherwise it is relative to the "
         "working directory.",

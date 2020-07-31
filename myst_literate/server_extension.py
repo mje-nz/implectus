@@ -20,23 +20,33 @@ class LiterateContentsManager(
     FileContentsManager,  # Help type deduction, since Jupytext hides its base
     LiterateConfiguration,
 ):
-    """Jupyter contents manager which supports Jupytext and Myst-Literate files."""
+
+    """Jupyter contents manager which supports Jupytext and Myst-Literate files.
+
+    See https://jupyter-notebook.readthedocs.io/en/stable/extending/contents.html for
+    Jupyter Contents API documentation.
+    """
 
     def save(self, model: dict, path=""):
-        """Save the file model and return the model with no content."""
+        """Save the file model and return the model with no content.
+
+        Args:
+            model: Jupyter virtual filesystem entity.
+            path: API-style path, which seems to mean relative to the server's working
+                directory but starting with a /.
+        """
         # TODO: do nothing with default config
+        relative_path = path.strip("/")
         if (
             "type" in model
             and model["type"] == "notebook"
-            and self.should_process(path)
+            and self.should_process(relative_path)
         ):
-            # TODO: only for notebooks in source path
             nb = nbformat.from_dict(model["content"])
-            nb_path = self._get_os_path(path)
-            self.log.info("[Literate] Saving code for %s" % path)
-            # TODO: move path calculation out of write_code/doc?
+            nb_path = self._get_os_path(relative_path)
+            self.log.info("[Literate] Saving code for %s" % relative_path)
             write_code(nb, nb_path, self)
-            self.log.info("[Literate] Saving docs for %s" % path)
+            self.log.info("[Literate] Saving docs for %s" % relative_path)
             write_doc(nb, nb_path, self)
         # TODO: why doesn't super work after re-deriving?
         return super(type(self), self).save(model, path)
