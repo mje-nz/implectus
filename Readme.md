@@ -1,4 +1,4 @@
-# MyST-Literate
+# Implectus
 > Write Python libraries as literate programs using Jupyter notebooks.
 
 The [Jupyter notebook](https://github.com/jupyter/notebook) is a great tool for literate Python programming, allowing code to be interspersed with rich outputs and Markdown.

@@ -6,13 +6,13 @@ import textwrap
 import jupytext
 import pytest
 
-from myst_literate.config import LiterateConfiguration
-from myst_literate.main import sync, write_code, write_doc
+from implectus.config import ImplectusConfiguration
+from implectus.main import sync, write_code, write_doc
 
 
 @pytest.fixture
 def config(tmpdir):
-    return LiterateConfiguration(
+    return ImplectusConfiguration(
         source_dir="notebooks",
         code_dir="package",
         doc_dir="doc",

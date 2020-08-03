@@ -4,15 +4,15 @@ from traitlets import Bool, Unicode
 from traitlets.config import Configurable
 
 
-class LiterateConfiguration(Configurable):
+class ImplectusConfiguration(Configurable):
 
     # TODO: make paths absolute when loading from a file
 
     source_dir = Unicode(
         "notebooks",
-        help="Directory containing literate source notebooks, which is used to determine "
-        "output paths.  If this is specified in a config file then it is relative to "
-        "the file, otherwise it is relative to the working directory.",
+        help="Directory containing source notebooks, which is used to determine output "
+        "paths.  If this is specified in a config file then it is relative to the file, "
+        "otherwise it is relative to the working directory.",
         config=True,
     )
 
@@ -52,7 +52,7 @@ class LiterateConfiguration(Configurable):
     def validate_config(self):
         """Check whether the configuration is valid.
 
-        This is not called magically.
+        (This is not called magically anywhere.)
         """
         if self.export_code_as_package and not self.code_dir:
             raise ValueError(
@@ -113,5 +113,5 @@ class LiterateConfiguration(Configurable):
         return self.doc_path / doc_filename.with_suffix(".ipynb")
 
 
-def load_literate_config(path):
+def load_implectus_config(path):
     raise NotImplementedError()

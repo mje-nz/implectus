@@ -4,8 +4,8 @@ import textwrap
 
 import jupytext
 
-from myst_literate.config import LiterateConfiguration
-from myst_literate.main import writes_code, writes_doc
+from implectus.config import ImplectusConfiguration
+from implectus.main import writes_code, writes_doc
 
 source = textwrap.dedent(
     """\
@@ -22,7 +22,7 @@ source = textwrap.dedent(
 
 
 def test_writes_code():
-    cfg = LiterateConfiguration(source_dir=".", code_dir="package")
+    cfg = ImplectusConfiguration(source_dir=".", code_dir="package")
     nb = jupytext.reads(source, fmt="py:light")
     actual = writes_code(nb, "main.py", cfg)
 
@@ -36,7 +36,7 @@ def test_writes_code():
 
 
 def test_writes_doc():
-    cfg = LiterateConfiguration(
+    cfg = ImplectusConfiguration(
         source_dir=".", code_dir="package", export_code_as_package=True
     )
     nb = jupytext.reads(source, fmt="py:light")

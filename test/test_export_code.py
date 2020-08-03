@@ -2,8 +2,8 @@
 
 import pytest
 
-from myst_literate.export_code import relative_import, relativize_imports, should_export
-from myst_literate.util import nb_cell
+from implectus.export_code import relative_import, relativize_imports, should_export
+from implectus.util import nb_cell
 
 
 class TestShouldExport:

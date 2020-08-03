@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from myst_literate.config import LiterateConfiguration
+from implectus.config import ImplectusConfiguration
 
 
 @pytest.mark.parametrize(
@@ -12,12 +12,12 @@ from myst_literate.config import LiterateConfiguration
         ("notebooks", ".", "./notebooks"),
         ("/tmp/notebooks", "", "/tmp/notebooks"),
         ("/tmp/notebooks", ".", "/tmp/notebooks"),
-        ("notebooks", "/home/literate", "/home/literate/notebooks"),
-        ("/tmp/notebooks", "/home/literate", "/tmp/notebooks"),
+        ("notebooks", "/home/implectus", "/home/implectus/notebooks"),
+        ("/tmp/notebooks", "/home/implectus", "/tmp/notebooks"),
     ),
 )
 def test_source_path(source, root, expected):
-    cfg = LiterateConfiguration(source_dir=source, root_dir=root)
+    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
     assert cfg.source_path == Path(expected)
 
 
@@ -28,12 +28,12 @@ def test_source_path(source, root, expected):
         ("package", ".", "./package"),
         ("/tmp/package", "", "/tmp/package"),
         ("/tmp/package", ".", "/tmp/package"),
-        ("package", "/home/literate", "/home/literate/package"),
-        ("/tmp/package", "/home/literate", "/tmp/package"),
+        ("package", "/home/implectus", "/home/implectus/package"),
+        ("/tmp/package", "/home/implectus", "/tmp/package"),
     ),
 )
 def test_code_path(code, root, expected):
-    cfg = LiterateConfiguration(code_dir=code, root_dir=root)
+    cfg = ImplectusConfiguration(code_dir=code, root_dir=root)
     assert cfg.code_path == Path(expected)
 
 
@@ -44,12 +44,12 @@ def test_code_path(code, root, expected):
         ("doc", ".", "./doc"),
         ("/tmp/doc", "", "/tmp/doc"),
         ("/tmp/doc", ".", "/tmp/doc"),
-        ("doc", "/home/literate", "/home/literate/doc"),
+        ("doc", "/home/implectus", "/home/implectus/doc"),
         ("/tmp/doc", "/home/doc", "/tmp/doc"),
     ),
 )
 def test_doc_path(doc, root, expected):
-    cfg = LiterateConfiguration(doc_dir=doc, root_dir=root)
+    cfg = ImplectusConfiguration(doc_dir=doc, root_dir=root)
     assert cfg.doc_path == Path(expected)
 
 
@@ -67,7 +67,7 @@ def test_doc_path(doc, root, expected):
     ),
 )
 def test_should_process(path, source, root, expected):
-    cfg = LiterateConfiguration(source_dir=source, root_dir=root)
+    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
     assert cfg.should_process(path) == expected
 
 
@@ -82,19 +82,19 @@ def test_should_process(path, source, root, expected):
     ),
 )
 def test_relative_path_to_source(path, source, root, expected):
-    cfg = LiterateConfiguration(source_dir=source, root_dir=root)
+    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
     assert cfg.relative_path_to_source(path) == Path(expected)
 
 
 @pytest.mark.parametrize(
     "path,source,root",
     (
-        ("/home/literate/notebooks/main.py", "/tmp/notebooks", "."),
-        ("/home/literate/notebooks/main.py", "notebooks", "/tmp"),
+        ("/home/implectus/notebooks/main.py", "/tmp/notebooks", "."),
+        ("/home/implectus/notebooks/main.py", "notebooks", "/tmp"),
     ),
 )
 def test_relative_path_to_source_invalid(path, source, root):
-    cfg = LiterateConfiguration(source_dir=source, root_dir=root)
+    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
     with pytest.raises(ValueError):
         cfg.relative_path_to_source(path)
 
@@ -121,7 +121,7 @@ def test_relative_path_to_source_invalid(path, source, root):
     ),
 )
 def test_code_path_for_source(path, source, code, expected, export_package):
-    cfg = LiterateConfiguration(
+    cfg = ImplectusConfiguration(
         source_dir=source, code_dir=code, export_code_as_package=export_package
     )
     assert cfg.code_path_for_source(path) == Path(expected)
@@ -137,7 +137,7 @@ def test_code_path_for_source(path, source, code, expected, export_package):
     ),
 )
 def test_module_name_with_package(path, source, code, root, expected):
-    cfg = LiterateConfiguration(
+    cfg = ImplectusConfiguration(
         source_dir=source, code_dir=code, root_dir=root, export_code_as_package=True
     )
     assert cfg.module_name(path) == expected
@@ -152,7 +152,7 @@ def test_module_name_with_package(path, source, code, root, expected):
     ),
 )
 def test_module_name_with_package_invalid(path, source, code, root):
-    cfg = LiterateConfiguration(
+    cfg = ImplectusConfiguration(
         source_dir=source, code_dir=code, root_dir=root, export_code_as_package=True
     )
     with pytest.raises(ValueError):
@@ -170,7 +170,7 @@ def test_module_name_with_package_invalid(path, source, code, root):
     ),
 )
 def test_module_name_without_package(path, source, code, expected):
-    cfg = LiterateConfiguration(
+    cfg = ImplectusConfiguration(
         source_dir=source, code_dir=code, export_code_as_package=False
     )
     assert cfg.module_name(path) == expected
@@ -187,7 +187,7 @@ def test_module_name_without_package(path, source, code, expected):
     ),
 )
 def test_doc_path_for_source(path, source, doc, expected):
-    cfg = LiterateConfiguration(source_dir=source, doc_dir=doc)
+    cfg = ImplectusConfiguration(source_dir=source, doc_dir=doc)
     assert cfg.doc_path_for_source(path) == Path(expected)
 
 

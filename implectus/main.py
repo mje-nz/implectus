@@ -6,7 +6,7 @@ from typing.io import TextIO
 import jupytext
 from nbformat import NotebookNode
 
-from .config import LiterateConfiguration
+from .config import ImplectusConfiguration
 from .export_code import relativize_imports, should_export
 from .export_doc import document_cell, documented_names, should_document
 from .util import concat, nb_cell
@@ -33,7 +33,7 @@ def _jupytext_writes(notebook: NotebookNode, fmt: str, **kwargs):
 def writes_code(
     notebook: NotebookNode,
     source_filename: Union[str, Path],
-    config: LiterateConfiguration,
+    config: ImplectusConfiguration,
 ):
     """Write the code for the given source file to a string.
 
@@ -42,7 +42,7 @@ def writes_code(
     Args:
         notebook: The notebook to write.
         source_filename: Full path of the file from which notebook was read.
-        config: The Literate configuration.
+        config: The Implectus configuration.
     """
     nb = copy.deepcopy(notebook)
 
@@ -60,7 +60,7 @@ def writes_code(
 def write_code(
     notebook: NotebookNode,
     source_filename: Union[str, Path],
-    config: LiterateConfiguration,
+    config: ImplectusConfiguration,
     fp: Union[str, Path, TextIO] = None,
 ):
     """Write the code for the given source file to a file.
@@ -70,7 +70,7 @@ def write_code(
     Args:
         notebook: The notebook to write.
         source_filename: Full path of the file from which notebook was read.
-        config: The Literate configuration.
+        config: The Implectus configuration.
         fp: Any file-like object with a write method that accepts Unicode, or a path to
             write a file, or None to determine the destination filename automatically.
     """
@@ -88,7 +88,7 @@ def write_code(
 def writes_doc(
     notebook: NotebookNode,
     source_filename: Union[str, Path],
-    config: LiterateConfiguration,
+    config: ImplectusConfiguration,
 ):
     """Write the documentation for the given source file to a string.
 
@@ -97,7 +97,7 @@ def writes_doc(
     Args:
         notebook: The notebook to write.
         source_filename: Full path of the file from which notebook was read.
-        config: The Literate configuration.
+        config: The Implectus configuration.
     """
     nb = copy.deepcopy(notebook)
 
@@ -115,7 +115,7 @@ def writes_doc(
 def write_doc(
     notebook: NotebookNode,
     source_filename: Union[str, Path],
-    config: LiterateConfiguration,
+    config: ImplectusConfiguration,
     fp: Union[str, Path, TextIO] = None,
 ):
     """Write the documentation for the given source file to a file.
@@ -125,7 +125,7 @@ def write_doc(
     Args:
         notebook: The notebook to write.
         source_filename: Full path of the file from which notebook was read.
-        config: The Literate configuration.
+        config: The Implectus configuration.
         fp: Any file-like object with a write method that accepts Unicode, or a path to
             write a file, or None to determine the destination filename automatically.
     """
@@ -145,7 +145,7 @@ def write_doc(
 #   no conflicting tags
 
 
-def sync(config: LiterateConfiguration):
+def sync(config: ImplectusConfiguration):
     """Export code and doc for each file in the source directory."""
     if not config.source_dir:
         return

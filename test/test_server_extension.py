@@ -4,8 +4,8 @@ from pathlib import Path
 import jupytext
 import pytest
 
-from myst_literate import LiterateContentsManager
-from myst_literate.server_extension import build_literate_contents_manager_class
+from implectus import ImplectusContentsManager
+from implectus.server_extension import build_implectus_contents_manager_class
 
 
 @pytest.fixture(params=[True, False])
@@ -13,9 +13,11 @@ def cm(tmpdir, request):
     """Create a temporary directory, change to it, and return a contents manager."""
     should_build = request.param
     if should_build:
-        class_ = build_literate_contents_manager_class(jupytext.TextFileContentsManager)
+        class_ = build_implectus_contents_manager_class(
+            jupytext.TextFileContentsManager
+        )
     else:
-        class_ = LiterateContentsManager
+        class_ = ImplectusContentsManager
     with tmpdir.as_cwd():
         yield class_()
 

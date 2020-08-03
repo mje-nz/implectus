@@ -1,7 +1,7 @@
 import setuptools
 
 about = {}  # type: ignore
-with open("myst_literate/__about__.py") as f:
+with open("implectus/__about__.py") as f:
     exec(f.read(), about)
 
 with open("README.md", "r") as f:
@@ -9,14 +9,14 @@ with open("README.md", "r") as f:
 description = long_description.splitlines()[1].strip("> ")
 
 setuptools.setup(
-    name="myst-literate",
+    name="implectus",
     version=about["__version__"],
     author="Matthew Edwards",
     author_email="mje-nz@users.noreply.github.com",
     description=description,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mje-nz/myst-literate",
+    url="https://github.com/mje-nz/implectus",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
