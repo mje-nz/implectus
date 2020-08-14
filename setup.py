@@ -4,7 +4,7 @@ about = {}  # type: ignore
 with open("implectus/__about__.py") as f:
     exec(f.read(), about)
 
-with open("README.md", "r") as f:
+with open("Readme.md", "r") as f:
     long_description = f.read()
 description = long_description.splitlines()[1].strip("> ")
 
