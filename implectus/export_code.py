@@ -1,8 +1,15 @@
 """Helper functions for exporting code."""
+import copy
 import itertools
 import re
+from pathlib import Path
+from typing import Union, cast
+from typing.io import TextIO
 
-from .util import is_private
+from nbformat import NotebookNode
+
+from .config import ImplectusConfiguration
+from .util import is_private, jupytext_writes
 
 
 def should_export(cell):
@@ -57,3 +64,58 @@ def exported_names(cell):
     classes = _re_class_def.findall(cell.source)
     names = [(f, "function") for f in functions] + [(c, "class") for c in classes]
     return [(name, type_) for (name, type_) in names if not is_private(name)]
+
+
+def writes_code(
+    notebook: NotebookNode,
+    source_filename: Union[str, Path],
+    config: ImplectusConfiguration,
+):
+    """Write the code for the given source file to a string.
+
+    The format is given by config.code_format.
+
+    Args:
+        notebook: The notebook to write.
+        source_filename: Full path of the file from which notebook was read.
+        config: The Implectus configuration.
+    """
+    nb = copy.deepcopy(notebook)
+
+    nb.cells = [cell for cell in nb.cells if should_export(cell)]
+    if config.export_code_as_package:
+        nb.cells = [
+            relativize_imports(cell, config.module_name(source_filename))
+            for cell in nb.cells
+        ]
+
+    nb.metadata.get("jupytext", {})["notebook_metadata_filter"] = "-all"
+    return jupytext_writes(nb, config.code_format)
+
+
+def write_code(
+    notebook: NotebookNode,
+    source_filename: Union[str, Path],
+    config: ImplectusConfiguration,
+    fp: Union[str, Path, TextIO] = None,
+):
+    """Write the code for the given source file to a file.
+
+    The format is given by config.code_format.
+
+    Args:
+        notebook: The notebook to write.
+        source_filename: Full path of the file from which notebook was read.
+        config: The Implectus configuration.
+        fp: Any file-like object with a write method that accepts Unicode, or a path to
+            write a file, or None to determine the destination filename automatically.
+    """
+    if fp is None:
+        fp = config.code_path_for_source(source_filename)
+    if not hasattr(fp, "write"):
+        # fp is a filename
+        path = Path(fp)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return write_code(notebook, source_filename, config, path.open("w"))
+    fp = cast(TextIO, fp)
+    fp.write(writes_code(notebook, source_filename, config))

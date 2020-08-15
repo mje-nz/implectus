@@ -1,8 +1,17 @@
 """Unit tests for export_code module."""
 
+import textwrap
+
+import jupytext
 import pytest
 
-from implectus.export_code import relative_import, relativize_imports, should_export
+from implectus.config import ImplectusConfiguration
+from implectus.export_code import (
+    relative_import,
+    relativize_imports,
+    should_export,
+    writes_code,
+)
 from implectus.util import nb_cell
 
 
@@ -108,3 +117,29 @@ class TestRelativizeImports:
 
 
 # TODO: exported_names
+
+
+def test_writes_code():
+    cfg = ImplectusConfiguration(source_dir=".", code_dir="package")
+    source = textwrap.dedent(
+        """\
+        # # Title
+
+        # + tags=["export"]
+        def hello():
+            print("Hello world")
+        # -
+
+        hello()
+        """
+    )
+    nb = jupytext.reads(source, fmt="py:light")
+    actual = writes_code(nb, "main.py", cfg)
+
+    expected = textwrap.dedent(
+        """\
+        def hello():
+            print("Hello world")
+        """
+    )
+    assert actual == expected
