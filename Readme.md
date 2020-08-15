@@ -1,4 +1,6 @@
 # Implectus
+[![CI](https://github.com/mje-nz/implectus/workflows/CI/badge.svg)](https://github.com/mje-nz/implectus/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/mje-nz/implectus/branch/master/graph/badge.svg)](https://codecov.io/gh/mje-nz/implectus)
 > Write Python libraries as literate programs using Jupyter notebooks.
 
 The [Jupyter notebook](https://github.com/jupyter/notebook) is a great tool for literate Python programming, allowing code to be interspersed with rich outputs and Markdown.
