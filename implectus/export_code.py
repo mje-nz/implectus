@@ -38,7 +38,7 @@ def relativize_imports(cell, module_name):
     # TODO: warn on absolute imports
     package_name = module_name.split(".")[0]
     re_import = re.compile(
-        r"^(\s*from )({}\.?\S*)( import .*)$".format(package_name), flags=re.MULTILINE
+        rf"^(\s*from )({package_name}\.?\S*)( import .*)$", flags=re.MULTILINE
     )
     cell.source = re_import.sub(
         lambda m: "".join((m[1], relative_import(m[2], module_name), m[3])), cell.source

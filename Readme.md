@@ -15,6 +15,8 @@ Implemented:
   * Adding `autodoc` directives for exported functions and classes that aren't otherwise documented.
   * Hiding the input areas of cells with "export" and "export-internal" cell tags
 * Convert absolute imports in notebook to relative imports in exported module.
+* Load config from file.
+* Jupyter notebook server extension.
 
 To do:
 * Generate `__init__.py`

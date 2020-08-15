@@ -1,194 +1,121 @@
+"""Unit tests for config module, apart from ImplectusConfiguration."""
+
+import os
 from pathlib import Path
 
+import pyfakefs  # noqa: F401
 import pytest
 
-from implectus.config import ImplectusConfiguration
+from implectus.config import load_config_for_path
+
+from .util import write_config
+
+HOME = os.environ["HOME"]
 
 
 @pytest.mark.parametrize(
-    "source,root,expected",
+    "config_file_path",
     (
-        ("notebooks", "", "notebooks"),
-        ("notebooks", ".", "./notebooks"),
-        ("/tmp/notebooks", "", "/tmp/notebooks"),
-        ("/tmp/notebooks", ".", "/tmp/notebooks"),
-        ("notebooks", "/home/implectus", "/home/implectus/notebooks"),
-        ("/tmp/notebooks", "/home/implectus", "/tmp/notebooks"),
+        # Not at all exhaustive
+        f"{HOME}/.implectus.toml",
+        f"{HOME}/.implectus.yml",
+        f"{HOME}/.implectus.yaml",
+        f"{HOME}/.implectus.json",
+        # pyfakefs breaks PyFormatLoader
+        # f"{HOME}/.implectus.py",
+        "/usr/share/implectus.yaml",
+        # These should work too
+        f"{HOME}/.jupytext",
+        f"{HOME}/.jupytext.toml",
+        f"{HOME}/.jupytext.yml",
+        f"{HOME}/.jupytext.yaml",
+        f"{HOME}/.jupytext.json",
+        "/usr/share/jupytext.yaml",
     ),
 )
-def test_source_path(source, root, expected):
-    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
-    assert cfg.source_path == Path(expected)
-
-
-@pytest.mark.parametrize(
-    "code,root,expected",
-    (
-        ("package", "", "package"),
-        ("package", ".", "./package"),
-        ("/tmp/package", "", "/tmp/package"),
-        ("/tmp/package", ".", "/tmp/package"),
-        ("package", "/home/implectus", "/home/implectus/package"),
-        ("/tmp/package", "/home/implectus", "/tmp/package"),
-    ),
+@pytest.mark.filterwarnings(
+    "ignore:Setting Implectus paths:implectus.config.ImplectusConfigWarning"
 )
-def test_code_path(code, root, expected):
-    cfg = ImplectusConfiguration(code_dir=code, root_dir=root)
-    assert cfg.code_path == Path(expected)
-
-
-@pytest.mark.parametrize(
-    "doc,root,expected",
-    (
-        ("doc", "", "doc"),
-        ("doc", ".", "./doc"),
-        ("/tmp/doc", "", "/tmp/doc"),
-        ("/tmp/doc", ".", "/tmp/doc"),
-        ("doc", "/home/implectus", "/home/implectus/doc"),
-        ("/tmp/doc", "/home/doc", "/tmp/doc"),
-    ),
-)
-def test_doc_path(doc, root, expected):
-    cfg = ImplectusConfiguration(doc_dir=doc, root_dir=root)
-    assert cfg.doc_path == Path(expected)
-
-
-@pytest.mark.parametrize(
-    "path,source,root,expected",
-    (
-        ("notebooks/main.py", "notebooks", "", True),
-        ("main.py", "notebooks", "", False),
-        ("main.py", ".", "", True),
-        ("main.py", "", ".", True),
-        ("main.py", "", "", True),
-        ("/tmp/notebooks/main.py", "notebooks", "/tmp", True),
-        ("notebooks/main.py", "notebooks", "/tmp", True),
-        ("/tmp/notebooks/main.py", "", "", False),
-    ),
-)
-def test_should_process(path, source, root, expected):
-    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
-    assert cfg.should_process(path) == expected
-
-
-@pytest.mark.parametrize(
-    "path,source,root,expected",
-    (
-        ("notebooks/main.py", "notebooks", "", "main.py"),
-        ("./notebooks/main.py", "notebooks", "", "main.py"),
-        ("notebooks/module/main.py", "notebooks", "", "module/main.py"),
-        ("/tmp/notebooks/main.py", "/tmp/notebooks", "", "main.py"),
-        ("/tmp/notebooks/main.py", "notebooks", "/tmp", "main.py"),
-    ),
-)
-def test_relative_path_to_source(path, source, root, expected):
-    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
-    assert cfg.relative_path_to_source(path) == Path(expected)
-
-
-@pytest.mark.parametrize(
-    "path,source,root",
-    (
-        ("/home/implectus/notebooks/main.py", "/tmp/notebooks", "."),
-        ("/home/implectus/notebooks/main.py", "notebooks", "/tmp"),
-    ),
-)
-def test_relative_path_to_source_invalid(path, source, root):
-    cfg = ImplectusConfiguration(source_dir=source, root_dir=root)
-    with pytest.raises(ValueError):
-        cfg.relative_path_to_source(path)
-
-
-@pytest.mark.parametrize("export_package", (True, False))
-@pytest.mark.parametrize(
-    "path,source,code,expected",
-    (
-        ("notebooks/main.py", "notebooks", "", "main.py"),
-        ("main.py", "", "package", "package/main.py"),
-        ("notebooks/main.py", "notebooks", "package", "package/main.py"),
-        ("notebooks/module/main.py", "notebooks", "", "module/main.py"),
-        ("notebooks/module/main.py", "notebooks", "package", "package/module/main.py"),
-        ("notebooks/main.ipynb", "notebooks", "", "main.py"),
-        ("main.ipynb", "", "package", "package/main.py"),
-        ("notebooks/main.ipynb", "notebooks", "package", "package/main.py"),
-        ("notebooks/module/main.ipynb", "notebooks", "", "module/main.py"),
-        (
-            "notebooks/module/main.ipynb",
-            "notebooks",
-            "package",
-            "package/module/main.py",
-        ),
-    ),
-)
-def test_code_path_for_source(path, source, code, expected, export_package):
-    cfg = ImplectusConfiguration(
-        source_dir=source, code_dir=code, export_code_as_package=export_package
+def test_finding_global_config(fs, config_file_path):
+    """Use pyfakefs to test finding global config files."""
+    # TODO: Why is this so slow with pyfakefs??
+    write_config(
+        config_file_path, dict(source_dir="custom", default_jupytext_formats="custom")
     )
-    assert cfg.code_path_for_source(path) == Path(expected)
+    config = load_config_for_path("notebook.py")
+    # Loading Implectus config works
+    assert config.source_dir == "custom"
+    # Loading Jupytext config works
+    assert config.default_jupytext_formats == "custom"
+    # Working dir not set automatically
+    assert not config.working_dir
 
 
-@pytest.mark.parametrize(
-    "path,source,code,root,expected",
-    (
-        ("main.py", "", "package", "", "package.main"),
-        ("notebooks/main.py", "notebooks", "package", "", "package.main"),
-        ("/tmp/main.py", "", "package", "/tmp", "package.main"),
-        ("notebooks/module/main.py", "notebooks", "package", "", "package.module.main"),
-    ),
-)
-def test_module_name_with_package(path, source, code, root, expected):
-    cfg = ImplectusConfiguration(
-        source_dir=source, code_dir=code, root_dir=root, export_code_as_package=True
+def _test_finding_local_config(root, config_name, notebook_name):
+    config_path = Path(root) / config_name
+    write_config(
+        config_path, dict(source_dir="custom", default_jupytext_formats="custom")
     )
-    assert cfg.module_name(path) == expected
+    notebook_path = Path(root) / notebook_name
+    config = load_config_for_path(notebook_path)
+    # Loading Implectus config works
+    assert config.source_dir == "custom"
+    # Loading Jupytext config works
+    assert config.default_jupytext_formats == "custom"
+    # Working dir set automatically
+    assert config.working_dir == root
 
 
 @pytest.mark.parametrize(
-    "path,source,code,root",
+    "config_name",
     (
-        ("main.py", "", "", ""),
-        ("/tmp/main.py", "", "", "/tmp"),
-        ("notebooks/module/main.py", "notebooks", "", ""),
+        # Exhaustive
+        "implectus.toml",
+        "implectus.yml",
+        "implectus.yaml",
+        "implectus.json",
+        ".implectus.toml",
+        ".implectus.yml",
+        ".implectus.yaml",
+        ".implectus.json",
+        ".implectus.py",
+        "jupytext",
+        "jupytext.toml",
+        "jupytext.yml",
+        "jupytext.yaml",
+        "jupytext.json",
+        ".jupytext",
+        ".jupytext.toml",
+        ".jupytext.yml",
+        ".jupytext.yaml",
+        ".jupytext.json",
+        ".jupytext.py",
     ),
 )
-def test_module_name_with_package_invalid(path, source, code, root):
-    cfg = ImplectusConfiguration(
-        source_dir=source, code_dir=code, root_dir=root, export_code_as_package=True
-    )
-    with pytest.raises(ValueError):
-        cfg.module_name(path)
+def test_finding_local_config(
+    tmpdir, config_name,
+):
+    _test_finding_local_config(tmpdir, config_name, "test.ipynb")
 
 
 @pytest.mark.parametrize(
-    "path,source,code,expected",
+    "notebook_path",
     (
-        ("main.py", "", "", "main"),
-        ("notebooks/main.py", "notebooks", "", "main"),
-        ("main.py", "", "code", "main"),
-        ("notebooks/subdir/main.py", "notebooks", "", "main"),
-        ("notebooks/subdir/main.py", "notebooks", "code", "main"),
+        "",
+        ".",
+        "notebooks" "notebooks/" "notebooks/test.ipynb",
+        "notebooks/submodule",
+        "notebooks/submodule/",
+        "notebooks/submodule/test.py",
     ),
 )
-def test_module_name_without_package(path, source, code, expected):
-    cfg = ImplectusConfiguration(
-        source_dir=source, code_dir=code, export_code_as_package=False
-    )
-    assert cfg.module_name(path) == expected
+def test_finding_local_config_for_path(tmpdir, notebook_path):
+    # Treat paths without extensions as dirs
+    p = Path(tmpdir) / notebook_path
+    if not p.suffix:
+        p.mkdir(parents=True, exist_ok=True)
+
+    _test_finding_local_config(tmpdir, "implectus.yaml", notebook_path)
 
 
-@pytest.mark.parametrize(
-    "path,source,doc,expected",
-    (
-        ("notebooks/main.py", "notebooks", "", "main.ipynb"),
-        ("main.py", "", "doc", "doc/main.ipynb"),
-        ("notebooks/main.py", "notebooks", "doc", "doc/main.ipynb"),
-        ("notebooks/module/main.py", "notebooks", "", "module/main.ipynb"),
-        ("notebooks/module/main.py", "notebooks", "doc", "doc/module/main.ipynb"),
-    ),
-)
-def test_doc_path_for_source(path, source, doc, expected):
-    cfg = ImplectusConfiguration(source_dir=source, doc_dir=doc)
-    assert cfg.doc_path_for_source(path) == Path(expected)
-
-
-# TODO: test with root path above working directory
+# TODO: Jupytext integration tests to make sure it still picks up the config

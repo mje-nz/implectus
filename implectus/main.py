@@ -102,7 +102,10 @@ def writes_doc(
     nb = copy.deepcopy(notebook)
 
     # Insert py:currentmodule directive for autodoc
-    directive = "```{py:currentmodule} %s```" % config.module_name(source_filename)
+    module_name = config.module_name(source_filename)
+    # TODO: should module_name() throw instead?
+    assert module_name is not None
+    directive = "```{py:currentmodule} %s```" % module_name
     nb.cells.insert(0, nb_cell("markdown", directive))
 
     nb.cells = [cell for cell in nb.cells if should_document(cell)]

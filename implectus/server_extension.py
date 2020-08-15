@@ -6,7 +6,12 @@ from jupytext.contentsmanager import build_jupytext_contents_manager_class
 from notebook.notebookapp import NotebookApp
 from notebook.services.contents.filemanager import FileContentsManager
 
-from .config import ImplectusConfiguration  # , load_implectus_config
+try:
+    import unittest.mock as mock
+except ImportError:
+    import mock  # type: ignore
+
+from .config import ImplectusConfiguration, load_config_for_path
 from .main import write_code, write_doc
 
 __all__ = [
@@ -36,29 +41,34 @@ class ImplectusContentsManager(
             path: API-style path, which seems to mean relative to the server's working
                 directory but starting with a /.
         """
-        # TODO: do nothing with default config
         relative_path = path.strip("/")
-        if (
-            "type" in model
-            and model["type"] == "notebook"
-            and self.should_process(relative_path)
-        ):
-            nb = nbformat.from_dict(model["content"])
-            nb_path = self._get_os_path(relative_path)
-            self.log.info("[Implectus] Saving code for %s" % relative_path)
-            write_code(nb, nb_path, self)
-            self.log.info("[Implectus] Saving docs for %s" % relative_path)
-            write_doc(nb, nb_path, self)
+        if "type" in model and model["type"] == "notebook":
+            config = self.get_config(relative_path)
+            self.validate_config()
+            if config.should_process(relative_path):
+                nb = nbformat.from_dict(model["content"])
+                # TODO: check these don't overwrite source or each other
+                if config.code_dir:
+                    self.log.info("[Implectus] Saving code for %s" % relative_path)
+                    write_code(nb, relative_path, config)
+                if config.doc_dir:
+                    self.log.info("[Implectus] Saving docs for %s" % relative_path)
+                    write_doc(nb, relative_path, config)
         # TODO: why doesn't super work after re-deriving?
         return super(type(self), self).save(model, path)
 
-    def get_config(self, path, use_cache=False):
+    def get_config(self, path, *args, **kwargs):
         """Return the Implectus configuration for the given API path."""
-        # TODO: load config from file
-        # abs_path = Path(self._get_os_path(path.strip("/")))
-        # parent_dir = abs_path.parent
-        # return load_implectus_config(parent_dir) or self
-        return self
+        with mock.patch(
+            "jupytext.contentsmanager.load_jupytext_config", load_config_for_path
+        ):
+            config = super(type(self), self).get_config(path, *args, **kwargs)
+        if config and config.working_path.is_absolute():
+            # get_config uses an absolute path, so the path that ends up in working_dir
+            # is also an absolute path, but all the other paths in here are relative
+            # to self.root_dir
+            config.working_dir = str(config.working_path.relative_to(self.root_dir))
+        return config
 
 
 def build_implectus_contents_manager_class(base_class: type):
@@ -79,7 +89,7 @@ def replace_contents_manager(app: NotebookApp):
     if not hasattr(app.contents_manager_class, "default_jupytext_formats"):
         app.log.debug(
             "[Implectus] Building Jupytext contents manager "
-            "from {}".format(app.contents_manager_class.__name__)
+            f"from {app.contents_manager_class.__name__}"
         )
         app.contents_manager_class = build_jupytext_contents_manager_class(
             app.contents_manager_class
@@ -87,14 +97,12 @@ def replace_contents_manager(app: NotebookApp):
 
     app.log.debug(
         "[Implectus] Building Implectus contents manager "
-        "from {}".format(app.contents_manager_class.__name__)
+        f"from {app.contents_manager_class.__name__}"
     )
     contents_manager_class = build_implectus_contents_manager_class(
         app.contents_manager_class
     )
     contents_manager = contents_manager_class(parent=app, log=app.log)
-    # TODO load config from file
-    contents_manager.validate_config()
 
     app.contents_manager_class = contents_manager_class
     app.contents_manager = contents_manager
