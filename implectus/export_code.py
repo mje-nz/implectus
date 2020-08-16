@@ -9,7 +9,7 @@ from typing.io import TextIO
 from nbformat import NotebookNode
 
 from .config import ImplectusConfiguration
-from .util import is_private, jupytext_writes
+from .util import implectus_header_cell, is_private, jupytext_writes
 
 
 def should_export(cell):
@@ -88,6 +88,9 @@ def writes_code(
             relativize_imports(cell, config.module_name(source_filename))
             for cell in nb.cells
         ]
+
+    # Insert Implectus header
+    nb.cells.insert(0, implectus_header_cell(source_filename))
 
     nb.metadata.get("jupytext", {})["notebook_metadata_filter"] = "-all"
     return jupytext_writes(nb, config.code_format)

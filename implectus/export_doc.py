@@ -9,7 +9,7 @@ from nbformat import NotebookNode
 
 from .config import ImplectusConfiguration
 from .export_code import exported_names
-from .util import concat, jupytext_writes, nb_cell
+from .util import concat, implectus_header_cell, jupytext_writes, nb_cell
 
 __all__ = ["write_doc", "writes_doc"]
 
@@ -83,13 +83,17 @@ def writes_doc(
     """
     nb = copy.deepcopy(notebook)
 
+    # Insert Implectus header
+    nb.cells.insert(0, implectus_header_cell(source_filename))
+
     # Insert py:currentmodule directive for autodoc
     module_name = config.module_name(source_filename)
     # TODO: should module_name() throw instead?
     assert module_name is not None
     directive = "```{py:currentmodule} %s```" % module_name
-    nb.cells.insert(0, nb_cell("markdown", directive))
+    nb.cells.insert(1, nb_cell("markdown", directive))
 
+    # Filter cells and add autodoc directives
     nb.cells = [cell for cell in nb.cells if should_document(cell)]
     documented_names_ = concat(documented_names(cell) for cell in nb.cells)
     nb.cells = concat(document_cell(cell, documented_names_) for cell in nb.cells)
