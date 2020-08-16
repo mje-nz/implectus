@@ -1,15 +1,11 @@
 import textwrap
+import unittest.mock as mock
 
 import jupytext
 import nbformat
 from jupytext.contentsmanager import build_jupytext_contents_manager_class
 from notebook.notebookapp import NotebookApp
 from notebook.services.contents.filemanager import FileContentsManager
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock  # type: ignore
 
 from .config import ImplectusConfiguration, load_config_for_path
 from .main import write_code, write_doc

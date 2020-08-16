@@ -1,16 +1,11 @@
 import os
+import unittest.mock as mock
 import warnings
 from pathlib import Path
 from typing import Iterator, Optional
 
 import jupytext.config
 from traitlets import Bool, Unicode
-
-try:
-    import unittest.mock as mock
-except ImportError:
-    import mock  # type: ignore
-
 
 __all__ = ["ImplectusConfigWarning", "ImplectusConfiguration", "load_config_for_path"]
 
