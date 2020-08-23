@@ -9,7 +9,12 @@ from typing.io import TextIO
 from nbformat import NotebookNode
 
 from .config import ImplectusConfiguration
-from .util import implectus_header_cell, is_private, jupytext_writes
+from .util import (
+    assert_overwriteable,
+    implectus_header_cell,
+    is_private,
+    jupytext_writes,
+)
 
 
 def should_export(cell):
@@ -92,6 +97,7 @@ def writes_code(
     # Insert Implectus header
     nb.cells.insert(0, implectus_header_cell(source_filename))
 
+    # TODO: this doesn't do the thing, use setdefault
     nb.metadata.get("jupytext", {})["notebook_metadata_filter"] = "-all"
     return jupytext_writes(nb, config.code_format)
 
@@ -117,6 +123,7 @@ def write_code(
         fp = config.code_path_for_source(source_filename)
     if not hasattr(fp, "write"):
         # fp is a filename
+        assert_overwriteable(fp)
         path = Path(fp)
         path.parent.mkdir(parents=True, exist_ok=True)
         return write_code(notebook, source_filename, config, path.open("w"))

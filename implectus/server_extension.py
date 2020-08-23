@@ -6,9 +6,11 @@ import nbformat
 from jupytext.contentsmanager import build_jupytext_contents_manager_class
 from notebook.notebookapp import NotebookApp
 from notebook.services.contents.filemanager import FileContentsManager
+from tornado.web import HTTPError
 
 from .config import ImplectusConfiguration, load_config_for_path
 from .main import write_code, write_doc
+from .util import DestinationNotOverwriteableError
 
 __all__ = [
     "ImplectusContentsManager",
@@ -43,13 +45,19 @@ class ImplectusContentsManager(
             self.validate_config()
             if config.should_process(relative_path):
                 nb = nbformat.from_dict(model["content"])
-                # TODO: check these don't overwrite source or each other
-                if config.code_dir:
-                    self.log.info("[Implectus] Saving code for %s" % relative_path)
-                    write_code(nb, relative_path, config)
-                if config.doc_dir:
-                    self.log.info("[Implectus] Saving docs for %s" % relative_path)
-                    write_doc(nb, relative_path, config)
+                # TODO: check these don't overwrite each other
+                try:
+                    if config.code_dir:
+                        self.log.info("[Implectus] Saving code for %s" % relative_path)
+                        write_code(nb, relative_path, config)
+                    if config.doc_dir:
+                        self.log.info("[Implectus] Saving docs for %s" % relative_path)
+                        write_doc(nb, relative_path, config)
+                except DestinationNotOverwriteableError as e:
+                    raise HTTPError(
+                        400, f"Implectus could not export to {e.filename} (it exists)"
+                    )
+
         # TODO: why doesn't super work after re-deriving?
         return super(type(self), self).save(model, path)
 

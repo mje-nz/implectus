@@ -9,7 +9,13 @@ from nbformat import NotebookNode
 
 from .config import ImplectusConfiguration
 from .export_code import exported_names
-from .util import concat, implectus_header_cell, jupytext_writes, nb_cell
+from .util import (
+    assert_overwriteable,
+    concat,
+    implectus_header_cell,
+    jupytext_writes,
+    nb_cell,
+)
 
 __all__ = ["write_doc", "writes_doc"]
 
@@ -122,6 +128,7 @@ def write_doc(
         fp = config.doc_path_for_source(source_filename)
     if not hasattr(fp, "write"):
         # fp is a filename
+        assert_overwriteable(fp)
         path = Path(fp)
         path.parent.mkdir(parents=True, exist_ok=True)
         return write_doc(notebook, source_filename, config, path.open("w"))

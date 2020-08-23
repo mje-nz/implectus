@@ -23,8 +23,8 @@ Implemented:
 To do:
 * Generate `__init__.py`
 * Fill in `__all__`
+* Handle code dir inside source dir
 * Strip empty cells
-* Don't overwrite user files
 * Add lots of test notebooks as in Jupytext
 * Copy images when exporting docs
 * Command-line tool

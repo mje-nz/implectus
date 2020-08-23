@@ -7,6 +7,7 @@ import jupytext
 import pytest
 import toml
 import yaml
+from nbformat import NotebookNode
 
 from implectus.config import IMPLECTUS_CONFIG_FILES
 
@@ -35,9 +36,12 @@ def write_config(config_file_path, config: dict):
                 toml.dump(config, f)
 
 
-def nb_to_py(path):
+def nb_to_py(path, strip_metadata=True):
     """Return the contents of a notebook (or script) as py:light."""
-    return jupytext.writes(jupytext.read(path), fmt="py:light")
+    nb = jupytext.read(path)
+    if strip_metadata:
+        nb.metadata.setdefault("jupytext", {})["notebook_metadata_filter"] = "-all"
+    return jupytext.writes(nb, fmt="py:light")
 
 
 def _strip_trailing_slash(pattern_or_patterns):
@@ -145,3 +149,12 @@ def doc_equal(*args, **kwargs):
     Arguments must be files or py:light strings.
     """
     return code_equal(*args, **kwargs, _resolve=_resolve_doc)  # type: ignore
+
+
+def create_nb(cells=None, metadata=None, nbformat=4, nbformat_minor=4):
+    return NotebookNode(
+        metadata=metadata or {},
+        nbformat=nbformat,
+        nbformat_minor=nbformat_minor,
+        cells=cells or [],
+    )

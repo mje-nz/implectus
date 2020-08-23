@@ -3,11 +3,20 @@ from pathlib import Path
 
 import jupytext
 import pytest
+from tornado.web import HTTPError
 
 from implectus import ImplectusContentsManager
 from implectus.server_extension import build_implectus_contents_manager_class
+from implectus.util import nb_cell
 
-from .util import code_equal, doc_equal, nb_to_py, no_extra_files, write_config
+from .util import (
+    code_equal,
+    create_nb,
+    doc_equal,
+    nb_to_py,
+    no_extra_files,
+    write_config,
+)
 
 
 @pytest.fixture(params=[True, False])
@@ -233,3 +242,35 @@ def test_load_save_with_config_in_subdir(tmpdir_cd):
     assert no_extra_files(
         expected=["src/notebooks/main.py", "src/code/main.py", "src/docs/main.ipynb"]
     )
+
+
+def test_dont_overwrite_existing_code(cm):
+    cm.source_path.mkdir()
+    jupytext.write(jupytext.reads(source, fmt="py:light"), "notebooks/main.py")
+    cm.code_path.mkdir()
+    Path("package/main.py").write_text("Handwritten file")
+
+    nb = cm.get("/notebooks/main.py")
+    with pytest.raises(HTTPError):
+        cm.save(nb, "/notebooks/main.py")
+
+    assert nb_to_py("notebooks/main.py") == source
+    assert Path("package/main.py").read_text() == "Handwritten file"
+    # Don't care whether or not doc is exported
+
+
+def test_dont_overwrite_existing_doc(cm):
+    cm.source_path.mkdir()
+    jupytext.write(jupytext.reads(source, fmt="py:light"), "notebooks/main.py")
+    cm.doc_path.mkdir()
+    jupytext.write(
+        create_nb([nb_cell("markdown", "Handwritten notebook")]), "doc/main.ipynb"
+    )
+
+    nb = cm.get("/notebooks/main.py")
+    with pytest.raises(HTTPError):
+        cm.save(nb, "/notebooks/main.py")
+
+    assert nb_to_py("notebooks/main.py") == source
+    assert nb_to_py("doc/main.ipynb").strip() == "# Handwritten notebook"
+    # Don't care whether or not code is exported
