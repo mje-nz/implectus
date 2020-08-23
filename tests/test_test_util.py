@@ -85,5 +85,12 @@ def test_code_equal_inconsistent_files():
     _test_code_unequal(actual, expected)
 
 
-# TODO: test code_equal more thoroughly and with files
-# TODO: dest doc_equal
+@pytest.mark.parametrize("filename", ("main.py", Path("main.py")))
+def test_code_equal_files(tmpdir_cd, filename):
+    text = code_template.format(filename="main.py", version="0.0.1")
+    Path(filename).write_text(text)
+    _test_code_equal(filename, text)
+
+
+# TODO: test code_equal more thoroughly
+# TODO: test doc_equal
