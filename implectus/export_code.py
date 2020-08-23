@@ -97,8 +97,7 @@ def writes_code(
     # Insert Implectus header
     nb.cells.insert(0, implectus_header_cell(source_filename))
 
-    # TODO: this doesn't do the thing, use setdefault
-    nb.metadata.get("jupytext", {})["notebook_metadata_filter"] = "-all"
+    nb.metadata.setdefault("jupytext", {})["notebook_metadata_filter"] = "-all"
     return jupytext_writes(nb, config.code_format)
 
 
