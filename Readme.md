@@ -21,6 +21,7 @@ Implemented:
 * Jupyter notebook server extension.
 
 To do:
+* Don't create file when no cells are tagged
 * Generate `__init__.py`
 * Fill in `__all__`
 * Handle code dir inside source dir
@@ -40,7 +41,12 @@ To do:
 * Support exporting to a file with a different name
 * Support exporting to module from dotted filename
 * Upstream clever bits as refactors to Jupytext
-
+* Try out [nbval](https://github.com/computationalmodelling/nbval) and [ipytest](https://github.com/chmp/ipytest)
+* Generate index by inserting marked cells into another notebook
+* Some kind of coverage support when testing
+* Mention watermark
+* Cython support
+* Jupyter integration tests
 
 ## Related projects
 There are many other projects with different approaches to literate Python programming such as [Pweave](https://github.com/mpastell/Pweave), [notedown](https://github.com/aaren/notedown), and [knitpy](https://github.com/jankatins/knitpy), which are also great.
