@@ -3,4 +3,6 @@ pre-commit~=2.6.0
 pyfakefs~=4.1.0
 pytest~=6.0.0
 pytest-cov~=2.10.1
+# TODO: remove after next jupytext release
+git+https://github.com/mwouts/jupytext.git#egg=jupytext
 -e .

@@ -214,6 +214,22 @@ def test_load_save_outside_source_dir_with_config_file(tmpdir_cd):
     assert no_extra_files(expected=["src/main.py"])
 
 
+def test_get_config_in_subdir(tmpdir_cd):
+    Path("src").mkdir()
+    write_config(
+        "src/implectus.yaml",
+        dict(
+            source_dir="notebooks",
+            code_dir="code",
+            doc_dir="docs",
+            export_code_as_package=True,
+        ),
+    )
+    cm = ImplectusContentsManager()
+    config = cm.get_config("src/notebooks/main.py")
+    assert config.source_path == Path("src/notebooks")
+
+
 def test_load_save_with_config_in_subdir(tmpdir_cd):
     Path("src").mkdir()
     write_config(

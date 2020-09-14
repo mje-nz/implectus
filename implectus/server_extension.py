@@ -1,5 +1,6 @@
 import textwrap
 import unittest.mock as mock
+from functools import partial
 
 import jupytext
 import nbformat
@@ -8,7 +9,14 @@ from notebook.notebookapp import NotebookApp
 from notebook.services.contents.filemanager import FileContentsManager
 from tornado.web import HTTPError
 
-from .config import ImplectusConfiguration, load_config_for_path
+from .config import (
+    IMPLECTUS_CONFIG_FILES,
+    ImplectusConfiguration,
+    construct_config,
+    find_global_config,
+    load_config_file,
+    validate_config,
+)
 from .main import write_code, write_doc
 from .util import DestinationNotOverwriteableError
 
@@ -61,13 +69,45 @@ class ImplectusContentsManager(
         # TODO: why doesn't super work after re-deriving?
         return super(type(self), self).save(model, path)
 
+    def get_config_file(self, directory):
+        """Return the jupytext configuration file for the given dir, if any."""
+        # TODO: doc
+        with mock.patch.multiple(
+            "jupytext.contentsmanager",
+            JUPYTEXT_CONFIG_FILES=IMPLECTUS_CONFIG_FILES,
+            find_global_jupytext_configuration_file=find_global_config,
+        ):
+            return super(type(self), self).get_config_file(directory)
+
+    def _load_config_file(self, parent_dir, config_file):
+        """Load the configuration file"""
+        # TODO: doc
+        with mock.patch.multiple(
+            "jupytext.contentsmanager",
+            load_jupytext_configuration_file=load_config_file,
+            validate_jupytext_configuration_file=construct_config,
+        ):
+            config = super(type(self), self).load_config_file(config_file)
+        if config:
+            return validate_config(parent_dir, config_file, config)
+
+    def load_config_file(self, config_file):
+        """Placeholder that get_config replaces."""
+        raise NotImplementedError()
+
     def get_config(self, path, *args, **kwargs):
         """Return the Implectus configuration for the given API path."""
-        with mock.patch(
-            "jupytext.contentsmanager.load_jupytext_config", load_config_for_path
-        ):
+        # Pass path into _load_config_file for validation
+        try:
+            old_load_config_file = self.load_config_file
+            patched_load_config_file = partial(self._load_config_file, path)
+            # https://github.com/python/mypy/issues/2427
+            self.load_config_file = patched_load_config_file  # type: ignore
             config = super(type(self), self).get_config(path, *args, **kwargs)
+        finally:
+            self.load_config_file = old_load_config_file  # type: ignore
         if config and config.working_path.is_absolute():
+            # TODO: is this still true?
             # get_config uses an absolute path, so the path that ends up in working_dir
             # is also an absolute path, but all the other paths in here are relative
             # to self.root_dir

@@ -24,5 +24,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=["jupytext>=1.5.2,<1.6", "notebook>=6.0.3,<7", "tornado"],
+    install_requires=["jupytext>1.6.0", "notebook>=6.0.3,<7", "tornado"],
 )

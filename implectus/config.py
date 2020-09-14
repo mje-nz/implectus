@@ -2,15 +2,33 @@ import os
 import unittest.mock as mock
 import warnings
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Union
 
 import jupytext.config
 from traitlets import Bool, Unicode
 
-__all__ = ["ImplectusConfigWarning", "ImplectusConfiguration", "load_config_for_path"]
+try:
+    # Introduced after 1.6.0
+    from jupytext.config import JupytextConfigurationError
+except ImportError:
+    JupytextConfigurationError = ValueError
+
+__all__ = [
+    "ImplectusConfigWarning",
+    "ImplectusConfiguration",
+    "construct_config",
+    "find_global_config",
+    "load_config_file",
+    "load_config_for_path",
+    "validate_config",
+]
 
 
 class ImplectusConfigWarning(RuntimeWarning):
+    pass
+
+
+class ImplectusConfigError(JupytextConfigurationError):
     pass
 
 
@@ -193,7 +211,7 @@ def _global_config_dirs() -> Iterator[str]:
         yield config_dir.replace("jupytext", "implectus")
 
 
-def _find_global_config() -> Optional[str]:
+def find_global_config() -> Optional[str]:
     """Search for global Implectus or Jupytext config files.
 
     Returns: the path to the first config file found.
@@ -217,42 +235,78 @@ def _find_config(path, search_parent_dirs=True) -> Optional[str]:
     with mock.patch.multiple(
         "jupytext.config",
         JUPYTEXT_CONFIG_FILES=IMPLECTUS_CONFIG_FILES,
-        find_global_jupytext_configuration_file=_find_global_config,
+        find_global_jupytext_configuration_file=find_global_config,
     ):
         return jupytext.config.find_jupytext_configuration_file(
             path, search_parent_dirs
         )
 
 
-def _load_config_file(config_file_path: str) -> ImplectusConfiguration:
+def load_config_file(config_file_path: str, *args, **kwargs):
     """Read an Implectus or Jupytext config file (TOML, YAML, Python, or JSON)."""
+    # TODO: doc
+    try:
+        return jupytext.config.load_jupytext_configuration_file(
+            config_file_path, *args, **kwargs
+        )
+    except JupytextConfigurationError as e:
+        raise ImplectusConfigError(e)
+
+
+def construct_config(
+    config_file_path: str, config: Optional[dict]
+) -> Optional[ImplectusConfiguration]:
+    """Turn a dict-like config into an ImplectusConfiguration."""
+    # TODO: doc
     with mock.patch.multiple(
         "jupytext.config", JupytextConfiguration=ImplectusConfiguration
     ):
-        return jupytext.config.load_jupytext_configuration_file(config_file_path)
+        return jupytext.config.validate_jupytext_configuration_file(
+            config_file_path, config
+        )
 
 
-def load_config_for_path(notebook_path):
-    """Load the Implectus or Jupytext config file that applies to the given notebook."""
-    config_file = _find_config(notebook_path)
-    if not config_file:
-        return None
+def validate_config(
+    notebook_path: Union[str, Path],
+    config_file_path: Union[str, Path],
+    config: Optional[ImplectusConfiguration],
+):
+    if config is None:
+        return
+    # TODO: doc
     notebook_path = Path(notebook_path)
-    if notebook_path.is_file() and notebook_path.samefile(config_file):
-        # Inherited from Jupytext; I guess this filters out implectus.py
-        return None
-
-    config = _load_config_file(config_file)
-    config_dir = Path(config_file).parent
+    config_file_path = Path(config_file_path)
+    config_dir = config_file_path.parent
     if config_dir == notebook_path or config_dir in notebook_path.parents:
         # If a local config file was used, use that dir as the working dir
-        config.working_dir = str(Path(config_file).parent)
+        config.working_dir = str(config_dir)
     elif config.source_dir or config.code_dir or config.doc_dir:
         # Discourage setting paths in global config
+        # TODO: test
         warnings.warn(
             "Setting Implectus paths in a global config file will make them relative "
             "to the working directory, which means the CLI will only work from the "
             "project root.",
             ImplectusConfigWarning,
         )
+    return config
+
+
+def load_config_for_path(notebook_path):
+    """Load the Implectus or Jupytext config file that applies to the given notebook."""
+    # TODO: doc
+    config_file = _find_config(notebook_path)
+    if not config_file:
+        return None
+
+    # TODO: put this in find_config?
+    # TODO: this needs its own test
+    notebook_path = Path(notebook_path)
+    if notebook_path.is_file() and notebook_path.samefile(config_file):
+        # Inherited from Jupytext; I guess this filters out implectus.py
+        return None
+
+    config_dict = load_config_file(config_file)
+    config = construct_config(config_file, config_dict)
+    config = validate_config(notebook_path, config_file, config)
     return config

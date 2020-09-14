@@ -98,8 +98,14 @@ def no_extra_files(path=".", expected: Iterable = None):
 def _resolve_code(code_or_file, _load=lambda f: Path(f).read_text()):
     """If `code_or_file` is a filename then load it, otherwise return it as-is."""
     if type(code_or_file) is str and ("\n" in code_or_file or len(code_or_file) > 256):
+        # Probably code
         return code_or_file
+    if type(code_or_file) is str and code_or_file.endswith(".py"):
+        # Probably filename
+        assert Path(code_or_file).is_file()
+        return _load(code_or_file)
     if Path(code_or_file).is_file():
+        # Probably filename
         return _load(code_or_file)
     return code_or_file
 
